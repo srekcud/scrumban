@@ -1,0 +1,76 @@
+version: "3.1"
+services:
+  
+  webserver:
+    image: nginx:alpine
+    container_name: webserver-${APP_NAME}
+    working_dir: /var/www/scrumban
+    volumes:
+        - $PWD:/var/www/scrumban/
+        - ./volumes/nginx:/etc/nginx/conf.d
+    ports:
+        - "${NETWORK_PREFIX}.1:80:80"
+    networks:
+        scrumban:
+            ipv4_address: ${NETWORK_PREFIX}.2
+
+  php-fpm:
+    image: php-fpm
+    container_name: ${APP_NAME}-php-fpm
+    working_dir: /var/www/scrumban
+    networks:
+        scrumban:
+            ipv4_address: ${NETWORK_PREFIX}.3
+    volumes:
+        - ./volumes/php-fpm:/var/log/php:cached
+        - .:/var/www/scrumban:cached
+        - ./volumes/php-fpm/99-custom.ini:/usr/local/etc/php/conf.d/99-custom.ini
+
+  node:
+    image: node:18
+    container_name: node
+    command: /bin/true
+    working_dir: /var/www
+    volumes:
+      - .:/var/www:cached
+    networks:
+      scrumban:
+        ipv4_address: ${NETWORK_PREFIX}.10
+
+  php-cli:
+    # build: .docker/php-cli
+    image: php-cli
+    container_name: php-cli
+    working_dir: /var/www
+    command: /bin/true
+    networks:
+      scrumban:
+        ipv4_address: ${NETWORK_PREFIX}.20
+    volumes:
+      - .:/var/www:cached
+
+  database:
+    image: postgres:${POSTGRES_VERSION:-15}-alpine
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-app}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-!ChangeMe!}
+      - POSTGRES_USER=${POSTGRES_USER:-app}
+    ports:
+      - "10.10.66.1:5432:5432"
+    networks:
+      scrumban:
+        ipv4_address: ${NETWORK_PREFIX}.50
+    volumes:
+      - db_data:/var/lib/postgresql/data:rw
+
+networks:
+  scrumban:
+    name: scrumban
+    ipam:
+      driver: default
+      config:
+        - subnet: ${NETWORK_PREFIX}.0/24
+
+volumes:
+  db_data:
+    driver: local

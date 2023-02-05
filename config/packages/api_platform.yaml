@@ -1,0 +1,4 @@
+api_platform:
+  show_webby: false
+  title: 'Scrumban'
+  description: 'Simplify / automate SDu tasks as ScrumMaster'
