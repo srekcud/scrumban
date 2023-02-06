@@ -3,13 +3,28 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Delete;
+
 use App\Repository\SprintRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 
 #[ORM\Entity(repositoryClass: SprintRepository::class)]
-#[ApiResource]
+#[ApiResource/*(
+    operations: [
+        new Get(),
+        new GetCollection(),
+        new Patch(),
+        new Post(),
+        new Delete()
+    ])*/]
 class Sprint
 {
     #[ORM\Id]
@@ -25,6 +40,14 @@ class Sprint
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $endDate = null;
+
+    #[ORM\ManyToMany(targetEntity: Issue::class, mappedBy: 'sprint')]
+    private Collection $issues;
+
+    public function __construct()
+    {
+        $this->issues = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -66,4 +89,32 @@ class Sprint
 
         return $this;
     }
+
+    /**
+     * @return Collection<int, Issue>
+     */
+    public function getIssues(): Collection
+    {
+        return $this->issues;
+    }
+
+    public function addIssue(Issue $issue): self
+    {
+        if (!$this->issues->contains($issue)) {
+            $this->issues->add($issue);
+            $issue->addSprint($this);
+        }
+
+        return $this;
+    }
+
+    public function removeIssue(Issue $issue): self
+    {
+        if ($this->issues->removeElement($issue)) {
+            $issue->removeSprint($this);
+        }
+
+        return $this;
+    }
+
 }
