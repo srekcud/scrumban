@@ -15,3 +15,10 @@ docker compose run --rm  php-cli composer require api
 
 docker compose run --rm  php-cli php bin/console doctrine:database:create
 ```
+
+
+
+https://api-platform.com/docs/core/state-providers/
+
+
+https://api-platform.com/docs/core/state-processors/
